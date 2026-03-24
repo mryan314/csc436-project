@@ -19,7 +19,7 @@ export default function VariationsSelect({ pose, updatePose }) {
 			return (
 				<Pressable onPress={() => updatePose(item)}>
 					<Image
-						source={item.image}
+						source={{uri: "https://drive.google.come/file/d/"+item.image+"/preview"}}
 						style={
 							item.name == pose.name ? styles.varSelected : styles.varImage
 						}

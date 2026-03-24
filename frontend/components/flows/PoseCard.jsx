@@ -20,7 +20,7 @@ function PoseCard({ pose, onPress, onLongPress, index, isCurrent, showName }) {
 			style={isCurrent ? styles.selected : styles.container}
 		>
 			<ImageBackground
-				source={pose.image}
+				source={{uri: "https://drive.google.come/file/d/"+pose.image+"/preview"}}
 				style={styles.imageContainer}
 				imageStyle={styles.image}
 			>

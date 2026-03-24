@@ -11,6 +11,7 @@ import Input from "../../components/basic/Input"
 export default function SignupScreen() {
 	const [name, setName] = useState("")
 	const [email, setEmail] = useState("")
+	const [tel, setTel] = useState("")
 	const [password, setPassword] = useState("")
 	const [reenter, setReenter] = useState("")
 	const [error, setError] = useState()
@@ -22,12 +23,12 @@ export default function SignupScreen() {
 		// if signup success, update context & nav back to original page (or profile/splash)
 		// else show error and clear pass/fields??
 
-		if (!name || !email || !password || !reenter) {
+		if (!name || !email || !tel || !password || !reenter) {
 			setError("Please fill all fields.")
 		} else if (password !== reenter) {
 			setError("Passwords do not match.")
 		} else {
-			signUp(name, email.text, password, setUser)
+			signUp(name, email.text, tel, password, setUser)
 			setPassword("")
 			setError()
 			router.back()
@@ -63,7 +64,17 @@ export default function SignupScreen() {
 					placeholder="Email"
 					inputMode="email"
 					autoComplete="email"
+					keyboardType="email-address"
 					onChangeText={(text) => setEmail({ text })}
+					style={Styles.textInput}
+				/>
+				<Input
+					value={tel}
+					placeholder="Phone Number"
+					inputMode="tel"
+					autoComplete="tel"
+					keyboardType="phone-pad"
+					onChangeText={(text) => setTel({ text })}
 					style={Styles.textInput}
 				/>
 				<Input

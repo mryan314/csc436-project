@@ -61,6 +61,7 @@ export default function LoginScreen() {
 					placeholder="Email"
 					inputMode="email"
 					autoComplete="email"
+					keyboardType="email-address"
 					onChangeText={(text) => setEmail({ text })}
 					placeholderTextColor={Colors.placeholderText}
 				/>

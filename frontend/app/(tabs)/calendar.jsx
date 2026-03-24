@@ -13,11 +13,13 @@ import Header from "../../components/Header"
 import Colors from "../../constants/Colors"
 import Styles from "../../constants/Styles"
 import { UserContext } from "../../context/UserContext"
+import { updateClasses } from "../../utils/authUtils"
 
 const CalendarScreen = () => {
 	const [selectedDate, setSelectedDate] = useState("")
+	const [markedDates, setMarkedDates] = useState("2024-12-20")
 	const [showAddClass, setShowAddClass] = useState(false)
-	const user = useContext(UserContext).user
+	const { user, setUser } = useContext(UserContext)
 
 	const [availableClasses, setAvailableClasses] = useState({
 		"2024-10-24": [
@@ -48,14 +50,26 @@ const CalendarScreen = () => {
 	}
 
 	const bookClass = (classId, date) => {
+		console.log(classId)
 		Alert.alert("Confirm Booking", "Would you like to book this class?", [
 			{ text: "Cancel", style: "cancel" },
 			{
 				text: "Book",
 				onPress: () => {
 					Alert.alert("Success", "Class booked successfully!")
-					classId.spots--
-					user?.classes.push(classId.id)
+					const classesCopy = { ...availableClasses }
+					classesCopy[date] = classesCopy[date].map((c) => {
+						if (c === classId) {
+							return { ...c, spots: classId.spots - 1 }
+						} else return c
+					})
+					setAvailableClasses(classesCopy)
+					updateClasses(
+						[...user.classes, { ...classId, date: date }],
+						user,
+						setUser
+					)
+					//user?.classes.push({ date: date, ...classId })
 				},
 			},
 		])
@@ -108,6 +122,7 @@ const CalendarScreen = () => {
 			<Calendar
 				onDayPress={handleDayPress}
 				markedDates={{
+					"2024-12-20": {marked: true, dotColor: Colors.ui},
 					[selectedDate]: { selected: true, selectedColor: Colors.ui },
 				}}
 				theme={{

@@ -12,6 +12,7 @@ import { useCallback, useState } from "react"
 import Styles from "../../constants/Styles"
 import FlowModal from "./FlowModal"
 import Colors from "../../constants/Colors"
+import { Difficulty } from "../../utils/poses"
 
 export default function SavesModal({
 	savedFlows,
@@ -37,7 +38,7 @@ export default function SavesModal({
 			<View style={styles.card}>
 				<Pressable onPress={() => handleSelect(flow)}>
 					<Text style={Styles.subheader}>{flow.title}</Text>
-					<Text style={Styles.text}>{flow.difficulty}</Text>
+					<Text style={Styles.text}>{Difficulty[flow.difficulty]}</Text>
 				</Pressable>
 				<View style={{ flexDirection: "row", gap: 10 }}>
 					<IconButton

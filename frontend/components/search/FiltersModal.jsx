@@ -9,7 +9,7 @@ import {
 import Styles from "../../constants/Styles"
 import Colors from "../../constants/Colors"
 import IconButton from "../basic/IconButton"
-import { useState } from "react"
+import { useCallback, useState } from "react"
 
 /**
  * A fullscreen modal UI to show and allow users to change filters for a search.
@@ -30,7 +30,7 @@ export default function FiltersModal({
 	visible,
 	setVisible,
 }) {
-    const [activeFilters, setActiveFilters] = useState(filters)
+	const [activeFilters, setActiveFilters] = useState(filters)
 	const toggleFilter = (filterName, option) => {
 		const newFilters = activeFilters
 		newFilters[filterName][option] = !activeFilters[filterName][option]
@@ -48,10 +48,15 @@ export default function FiltersModal({
 		</View>
 	)
 
-	const renderOption = (filter, option, isSelected) => (
-		<Pressable key={option} onPress={() => toggleFilter(filter, option)}>
-			<Text style={isSelected ? styles.selected : styles.option}>{option}</Text>
-		</Pressable>
+	const renderOption = useCallback(
+		(filter, option, isSelected) => (
+			<Pressable key={option} onPress={() => toggleFilter(filter, option)}>
+				<Text style={isSelected ? styles.selected : styles.option}>
+					{option}
+				</Text>
+			</Pressable>
+		),
+		[activeFilters]
 	)
 
 	return (
@@ -65,7 +70,7 @@ export default function FiltersModal({
 					name="arrow-left"
 					onPress={() => {
 						setVisible(false)
-                        setFilters(activeFilters)
+						setFilters(activeFilters)
 					}}
 				/>
 				{Object.entries(activeFilters).map(([filter, options], i) =>

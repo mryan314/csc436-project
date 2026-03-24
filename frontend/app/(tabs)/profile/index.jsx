@@ -23,11 +23,11 @@ import Input from "../../../components/basic/Input"
 
 export default function ProfileScreen() {
 	const router = useRouter()
-	const userContext = useContext(UserContext)
-	const user = userContext.user
-	const setUser = userContext.setUser
+	const {user, setUser} = useContext(UserContext)
+
 	const [name, setName] = useState("")
 	const [email, setEmail] = useState("")
+	const [phone, setPhone] = useState("")
 	const [password, setPassword] = useState("")
 	const [image, setImage] = useState(
 		<MaterialCommunityIcons
@@ -63,9 +63,10 @@ export default function ProfileScreen() {
 	}
 
 	const updateProfile = () => {
-		updateUserDetails(name, email, password, user, setUser)
+		updateUserDetails(name, email, phone, password, user, setUser)
 		setName("")
 		setEmail("")
+		setPhone("")
 		setPassword("")
 	}
 
@@ -97,10 +98,21 @@ export default function ProfileScreen() {
 						value={email}
 						inputMode="email"
 						autoComplete="email"
+						keyboardType="email-address"
 						onChangeText={(text) => setEmail(text)}
 						style={Styles.textInput}
 					/>
 				</View>
+				<Input
+					label="Phone Number"
+					placeholder={user?.phoneNumber}
+					value={phone}
+					inputMode="tel"
+					autoComplete="tel"
+					keyboardType="phone-pad"
+					onChangeText={(text) => setPhone({ text })}
+					style={Styles.textInput}
+				/>
 				<View style={Styles.input}>
 					<Text style={Styles.text}>Password</Text>
 					<Input

@@ -15,7 +15,7 @@ import Colors from "../../../constants/Colors"
 import { useCallback, useContext, useState } from "react"
 import PoseCard from "../../../components/flows/PoseCard"
 import IconButton from "../../../components/basic/IconButton"
-import Poses from "../../../temp/poses"
+import Poses, {Difficulty} from "../../../temp/poses"
 import Input from "../../../components/basic/Input"
 import SearchBar from "../../../components/search/SearchBar"
 import DraggableFlatList from "react-native-draggable-flatlist"
@@ -160,12 +160,17 @@ export default function FlowCreatorTab() {
 	const renderEditor = useCallback(
 		() => (
 			<>
-				<Image source={currentPose.image} style={styles.editImage} />
+				<Image 
+					source={{uri: "https://drive.google.come/file/d/"+currentPose.image+"/preview"}} 
+					style={styles.editImage} 
+				/>
 				<View style={styles.editDetails}>
 					<Text numberOfLines={1} style={styles.editHeader}>
 						{currentPose.name}
 					</Text>
-					<Text style={styles.editDescription}>{currentPose.difficulty}</Text>
+					<Text style={styles.editDescription}>
+						{Difficulty[currentPose.difficulty]}
+					</Text>
 					<Input
 						value={duration}
 						onChangeText={setDuration}

@@ -11,14 +11,13 @@ import PoseCard from "./PoseCard"
 import Colors from "../../constants/Colors"
 import Styles from "../../constants/Styles"
 import { useMemo } from "react"
+import { Difficulty } from "../../utils/poses"
 
 export default function FlowModal({ flow, onCancel, onEdit, onSave }) {
 	const difficulty = useMemo(() => {
-		if (flow.sequence.find((pose) => pose.difficulty === "Advanced"))
-			return "Advanced"
-		else if (flow.sequence.find((pose) => pose.difficulty === "Intermediate"))
-			return "Intermediate"
-		else return "Beginner"
+		if (flow.sequence.find((pose) => pose.difficulty === 2)) return 2
+		else if (flow.sequence.find((pose) => pose.difficulty === 1)) return 1
+		else return 0
 	}, [flow.sequence])
 
 	return (
@@ -26,7 +25,7 @@ export default function FlowModal({ flow, onCancel, onEdit, onSave }) {
 			<SafeAreaView style={{ ...Styles.container, gap: 15 }}>
 				<View>
 					<Text style={styles.title}>{flow?.title}</Text>
-					<Text style={styles.difficulty}>{difficulty}</Text>
+					<Text style={styles.difficulty}>{Difficulty[difficulty]}</Text>
 				</View>
 				<View style={styles.seqView}>
 					<FlatList
