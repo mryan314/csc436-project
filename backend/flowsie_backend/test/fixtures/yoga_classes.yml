@@ -1,0 +1,23 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  date: 2026-03-26
+  start_time: 2026-03-26 15:39:26
+  duration: 1
+  instructor_id: 1
+  desc: MyString
+  class_cap: 1
+  class_size: 1
+  location: MyString
+
+two:
+  name: MyString
+  date: 2026-03-26
+  start_time: 2026-03-26 15:39:26
+  duration: 1
+  instructor_id: 1
+  desc: MyString
+  class_cap: 1
+  class_size: 1
+  location: MyString

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_16_191406) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_26_200314) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -42,6 +42,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_16_191406) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "api_keys", force: :cascade do |t|
+    t.integer "bearer_id", null: false
+    t.string "bearer_type", null: false
+    t.datetime "created_at", null: false
+    t.string "token_digest", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bearer_id", "bearer_type"], name: "index_api_keys_on_bearer_id_and_bearer_type"
+    t.index ["token_digest"], name: "index_api_keys_on_token_digest", unique: true
+  end
+
   create_table "poses", force: :cascade do |t|
     t.string "bend", limit: 12
     t.datetime "created_at", null: false
@@ -54,6 +64,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_16_191406) do
     t.check_constraint "\"position\"::text = ANY (ARRAY['Standing'::character varying, 'Seated'::character varying, 'Supine'::character varying, 'Prone'::character varying, 'Arm Balance'::character varying, 'Supported'::character varying]::text[])", name: "poses_position_check"
     t.check_constraint "bend::text = ANY (ARRAY['Back Bend'::character varying, 'Forward Bend'::character varying, 'Lateral Bend'::character varying, 'Twist'::character varying, 'Balance'::character varying, 'Neutral'::character varying]::text[])", name: "poses_bend_check"
     t.check_constraint "difficulty::text = ANY (ARRAY['Beginner'::character varying, 'Intermediate'::character varying, 'Advanced'::character varying]::text[])", name: "poses_difficulty_check"
+  end
+
+  create_table "users", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.string "password_digest", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_users_on_email_address", unique: true
+  end
+
+  create_table "yoga_classes", force: :cascade do |t|
+    t.integer "class_cap"
+    t.integer "class_size"
+    t.datetime "created_at", null: false
+    t.date "date"
+    t.string "desc"
+    t.integer "duration"
+    t.integer "instructor_id"
+    t.string "location"
+    t.string "name"
+    t.time "start_time"
+    t.datetime "updated_at", null: false
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
