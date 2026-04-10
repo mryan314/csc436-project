@@ -12,4 +12,5 @@ Rails.application.routes.draw do
   # root "posts#index"
   
   resources :api_keys, path: 'api-keys', only: %i[index create destroy]
+  resources :user, path: 'user', only: %i[create show destroy]
 end

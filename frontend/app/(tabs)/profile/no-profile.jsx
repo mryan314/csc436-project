@@ -9,8 +9,8 @@ import { useContext, useEffect } from "react"
 import { UserContext } from "../../../context/UserContext"
 
 export default function NoProfileScreen() {
-	router = useRouter()
-	user = useContext(UserContext).user
+	const router = useRouter()
+	const user = useContext(UserContext).user
 
 	useEffect(() => {
 		if (user) {

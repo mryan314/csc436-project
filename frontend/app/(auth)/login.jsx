@@ -23,7 +23,7 @@ export default function LoginScreen() {
 	const router = useRouter()
 	const setUser = useContext(UserContext).setUser
 
-	const onLogin = () => {
+	const onLogin = async () => {
 		if (!email) {
 			setError("Please enter an email address.")
 		} else if (!password) {
@@ -32,10 +32,17 @@ export default function LoginScreen() {
 			// Make api call to authorization service
 			// if login success, update context & nav back to original page (or profile/splash)
 			// else, show error & clear pass?
-			logIn(email.text, password, setUser)
-			setPassword("")
-			setError()
-			router.back()
+			if (await logIn(email.text, password, setUser)) {
+				setPassword("")
+				setError()
+				console.log("success?")
+				router.back()
+			}
+			else {
+				console.log(password)
+				setPassword("")
+				setError("The email or password you entered was incorrect.")
+			}
 		}
 	}
 

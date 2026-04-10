@@ -23,11 +23,11 @@ import Input from "../../../components/basic/Input"
 
 export default function ProfileScreen() {
 	const router = useRouter()
-	const {user, setUser} = useContext(UserContext)
+	const { user, setUser } = useContext(UserContext)
 
 	const [name, setName] = useState("")
 	const [email, setEmail] = useState("")
-	const [phone, setPhone] = useState("")
+	//const [phone, setPhone] = useState("")
 	const [password, setPassword] = useState("")
 	const [image, setImage] = useState(
 		<MaterialCommunityIcons
@@ -35,14 +35,21 @@ export default function ProfileScreen() {
 			size={125}
 			name="account-circle"
 			color={"#abbdc9"}
-		/>
+		/>,
 	)
 
 	useEffect(() => {
 		if (user == null) {
 			router.navigate("/profile/no-profile")
-		} else if (user.profilePic !== null) {
-			setImage(<Image source={{ uri: user.profilePic }} style={styles.image} />)
+		} else {
+			setName(user.name)
+			setEmail(user.email)
+			// setPhone(user.phone)
+			if (user.profilePic !== null) {
+				setImage(
+					<Image source={{ uri: user.profilePic }} style={styles.image} />,
+				)
+			}
 		}
 	}, [user])
 
@@ -64,9 +71,6 @@ export default function ProfileScreen() {
 
 	const updateProfile = () => {
 		updateUserDetails(name, email, phone, password, user, setUser)
-		setName("")
-		setEmail("")
-		setPhone("")
 		setPassword("")
 	}
 
@@ -103,6 +107,7 @@ export default function ProfileScreen() {
 						style={Styles.textInput}
 					/>
 				</View>
+				{/** 
 				<Input
 					label="Phone Number"
 					placeholder={user?.phoneNumber}
@@ -113,6 +118,7 @@ export default function ProfileScreen() {
 					onChangeText={(text) => setPhone({ text })}
 					style={Styles.textInput}
 				/>
+				*/}
 				<View style={Styles.input}>
 					<Text style={Styles.text}>Password</Text>
 					<Input

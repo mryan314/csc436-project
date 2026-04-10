@@ -9,7 +9,6 @@ class ApiKeysController < ApplicationController
   end
 
   def create
-    debugger
     authenticate_with_http_basic do |email, password|
       user = User.find_by email: email
 

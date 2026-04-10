@@ -11,27 +11,30 @@ import Input from "../../components/basic/Input"
 export default function SignupScreen() {
 	const [name, setName] = useState("")
 	const [email, setEmail] = useState("")
-	const [tel, setTel] = useState("")
+	// const [tel, setTel] = useState("")
 	const [password, setPassword] = useState("")
 	const [reenter, setReenter] = useState("")
 	const [error, setError] = useState()
 	const router = useRouter()
 	const setUser = useContext(UserContext).setUser
 
-	const onSignup = () => {
+	const onSignup = async () => {
 		// Make api call to auth service
 		// if signup success, update context & nav back to original page (or profile/splash)
 		// else show error and clear pass/fields??
 
-		if (!name || !email || !tel || !password || !reenter) {
+		if (!name || !email || !password || !reenter) {
 			setError("Please fill all fields.")
 		} else if (password !== reenter) {
 			setError("Passwords do not match.")
-		} else {
-			signUp(name, email.text, tel, password, setUser)
+			setReenter("")
+		} else if (await signUp(name, email.text, tel, password, setUser)) {
 			setPassword("")
 			setError()
 			router.back()
+		} else {
+			setReenter("")
+			setError("Unable to create that user")
 		}
 	}
 
@@ -68,6 +71,7 @@ export default function SignupScreen() {
 					onChangeText={(text) => setEmail({ text })}
 					style={Styles.textInput}
 				/>
+				{/**
 				<Input
 					value={tel}
 					placeholder="Phone Number"
@@ -77,6 +81,7 @@ export default function SignupScreen() {
 					onChangeText={(text) => setTel({ text })}
 					style={Styles.textInput}
 				/>
+				*/}
 				<Input
 					value={password}
 					placeholder="Password"

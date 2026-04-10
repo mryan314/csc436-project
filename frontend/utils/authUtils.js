@@ -1,47 +1,72 @@
 import * as SecureStore from "expo-secure-store"
 
+async function generateUserToken(email, password) {
+	const base64encodedData = btoa(email.toLowerCase() + ":" + password)
+	// validate with authenticator
+	const response = await fetch("http://localhost:3000/api-keys", {
+		method: "POST",
+		headers: {
+			Authorization: "Basic " + base64encodedData,
+		},
+	}).then((response) => response.json())
+
+	return response
+}
+
+async function saveUserToken(token, id) {
+	await SecureStore.setItemAsync("userToken", token)
+	await SecureStore.setItemAsync("userTokenId", String(id))
+}
+
+async function getUserToken() {
+	return await SecureStore.getItemAsync("userToken")
+}
+
+async function fetchUserData(token, userId) {
+	console.log(token)
+	console.log(userId)
+	const response = await fetch(`http://localhost:3000/user/${userId}`, {
+		method: "GET",
+		headers: {
+			Authorization: "Bearer " + token,
+		},
+	}).then((response) => {
+		if (!response.ok) {
+			throw new Error(
+				`HTTP error when creating user! Status: ${response.status}`,
+			)
+		}
+		return response.json()
+	})
+	console.log(response)
+	return {
+		id: response.id,
+		name: response.first_name,
+		email: response.email,
+		role: response.role,
+		// below values not yet in DB
+		profilePic: null,
+		classes: [],
+		flows: [],
+		videos: [],
+	}
+}
+
 export async function logIn(email, password, setUser) {
 	try {
-		const base64encodedData = btoa(email + ":" + password)
-		// validate with authenticator
-		fetch("http://127.0.0.1:8000/login/", {
-			method: "GET",
-			headers: {
-				Authorization: "Basic " + base64encodedData,
-			},
-		})
-			.then((response) => response.json())
-			.then(
-				(json) =>
-					(document.getElementById("output").textContent = JSON.stringify(
-						json.results[0]
-					))
-			)
+		console.log("login start")
+		const response = await generateUserToken(email, password)
 
-		// temporary stand in for if authenticator failed
-		if (false) {
-			return false
-		}
+		console.log(response)
 
-		// filler data that would be recieved from authenticator
-		name = "Demo User"
-		role = "student"
-		profilePic = null
-		classes = []
-		flows = []
-		videos = []
+		await saveUserToken(response.token, response.id)
+		console.log("save token success")
 
-		const userDetails = {
-			name: name,
-			email: email,
-			role: role,
-			profilePic: profilePic,
-			classes: classes,
-			flows: flows,
-			videos: videos,
-		}
-		await SecureStore.setItemAsync("user", JSON.stringify(userDetails))
-		setUser(userDetails)
+		const userDetails = await fetchUserData(response.token, response.bearer_id)
+		console.log("fetch user success")
+		await setUser(userDetails)
+		console.log("set user success")
+		return true
 	} catch (e) {
 		console.warn(e)
 		return false
@@ -50,47 +75,68 @@ export async function logIn(email, password, setUser) {
 
 export async function signUp(name, email, tel, password, setUser) {
 	try {
-		const base64encodedData = btoa(email + ":" + password)
-		fetch("http://127.0.0.1:8000/users/create", {
+		const response = await fetch("http://localhost:3000/user", {
 			method: "POST",
 			headers: {
-				Authorization: "Basic " + base64encodedData,
 				"Content-Type": "application/json",
+				Accept: "application/json",
 			},
 			body: JSON.stringify({
-				username: email,
-				password: password,
-				name: name,
-				email: email,
-				phoneNumber: tel,
+				user: {
+					email: email,
+					password: password,
+					first_name: name,
+				},
 			}),
-		}).then((response) => console.log(response))
-		// verify with authenticator
+		}).then((response) => {
+			if (!response.ok) {
+				throw new Error(
+					`HTTP error when creating user! Status: ${response.status}`,
+				)
+			}
+			return response.json()
+		})
 
-		// temporary standin for if authenticator failed
-		if (false) {
-			return false
-		}
+		// generates and saves api token and user info
+		const tokenResponse = await generateUserToken(email, password)
+		await saveUserToken(tokenResponse.token, tokenResponse.bearer_id)
 
 		const userDetails = {
-			name: name,
-			email: email,
-			role: "student",
+			id: response.id,
+			name: response.first_name,
+			email: response.email,
+			role: response.role,
 			profilePic: null,
 			classes: [],
 			flows: [],
 			videos: [],
 		}
-		await SecureStore.setItemAsync("user", JSON.stringify(userDetails))
 		setUser(userDetails)
+
+		return true
 	} catch (e) {
 		console.warn(e)
+		return false
 	}
 }
 
 export async function logOut(setUser) {
 	try {
-		await SecureStore.deleteItemAsync("user")
+		const token = await SecureStore.getItemAsync("userToken")
+		const tokenId = await SecureStore.getItemAsync("userTokenId")
+		// delete api auth token from db
+		const response = await fetch(`http://localhost:3000/api-keys/${tokenId}`, {
+			method: "DELETE",
+			headers: {
+				Authorization: "Bearer " + token,
+			},
+		})
+
+		console.log(response)
+
+		// remove api auth token from local storage
+		await SecureStore.deleteItemAsync("userToken")
+		await SecureStore.deleteItemAsync("userTokenId")
 		setUser(null)
 		return true
 	} catch (e) {
@@ -105,7 +151,7 @@ export async function updateUserDetails(
 	tel,
 	password,
 	user,
-	setUser
+	setUser,
 ) {
 	try {
 		// validate with authenticator (i.e. if email unused)
