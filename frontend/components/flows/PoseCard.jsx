@@ -7,12 +7,20 @@ import {
 	Text,
 	View,
 } from "react-native"
+import { getPoseImageSource } from "../../utils/poseUtils"
 import Styles from "../../constants/Styles"
 import Colors from "../../constants/Colors"
 
 const { width } = Dimensions.get("window")
 
-function PoseCard({ pose, onPress, onLongPress, index, isCurrent, showName }) {
+export default function PoseCard({
+	pose,
+	onPress,
+	onLongPress,
+	index,
+	isCurrent,
+	showName,
+}) {
 	return (
 		<Pressable
 			onPress={() => onPress(pose)}
@@ -20,7 +28,7 @@ function PoseCard({ pose, onPress, onLongPress, index, isCurrent, showName }) {
 			style={isCurrent ? styles.selected : styles.container}
 		>
 			<ImageBackground
-				source={{uri: "https://drive.google.come/file/d/"+pose.image+"/preview"}}
+				source={getPoseImageSource(pose)}
 				style={styles.imageContainer}
 				imageStyle={styles.image}
 			>
@@ -91,5 +99,3 @@ const styles = StyleSheet.create({
 		color: Colors.activeUI,
 	},
 })
-
-export default React.memo(PoseCard)

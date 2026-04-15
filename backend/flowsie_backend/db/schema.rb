@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_01_170004) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_13_201103) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -56,12 +56,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_01_170004) do
     t.string "bend", limit: 12
     t.datetime "created_at", null: false
     t.string "difficulty", limit: 12
-    t.string "image"
+    t.string "image_file"
     t.string "name"
     t.string "position", limit: 12
     t.datetime "updated_at", null: false
-    t.string "variations", limit: 30
-    t.check_constraint "\"position\"::text = ANY (ARRAY['Standing'::character varying, 'Seated'::character varying, 'Supine'::character varying, 'Prone'::character varying, 'Arm Balance'::character varying, 'Supported'::character varying]::text[])", name: "poses_position_check"
+    t.integer "var_id"
+    t.index ["name"], name: "index_poses_on_name", unique: true
+    t.index ["var_id"], name: "index_poses_on_var_id"
+    t.check_constraint "\"position\"::text = ANY (ARRAY['Standing'::character varying, 'Seated'::character varying, 'Supported'::character varying, 'Supine'::character varying, 'Prone'::character varying, 'Arm Balance'::character varying]::text[])", name: "poses_position_check"
     t.check_constraint "bend::text = ANY (ARRAY['Back Bend'::character varying, 'Forward Bend'::character varying, 'Lateral Bend'::character varying, 'Twist'::character varying, 'Balance'::character varying, 'Neutral'::character varying]::text[])", name: "poses_bend_check"
     t.check_constraint "difficulty::text = ANY (ARRAY['Beginner'::character varying, 'Intermediate'::character varying, 'Advanced'::character varying]::text[])", name: "poses_difficulty_check"
   end

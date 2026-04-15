@@ -1,7 +1,4 @@
 Rails.application.routes.draw do
-  get "pose/index"
-  get "pose/show"
-  get "pose/create"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
@@ -12,5 +9,6 @@ Rails.application.routes.draw do
   # root "posts#index"
   
   resources :api_keys, path: 'api-keys', only: %i[index create destroy]
-  resources :user, path: 'user', only: %i[create show destroy]
+  resources :user, path: 'user', only: %i[create show update destroy]
+  resources :pose, path: 'pose', only: %i[index create show update]
 end

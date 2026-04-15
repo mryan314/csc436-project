@@ -4,41 +4,26 @@ import {
 	SafeAreaView,
 	FlatList,
 	StyleSheet,
-	Image,
-	Modal,
 	Alert,
 } from "react-native"
 import Styles from "../../../constants/Styles"
 import Header from "../../../components/Header"
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
 import Colors from "../../../constants/Colors"
-import { useCallback, useContext, useState } from "react"
+import { useCallback, useContext, useEffect, useState } from "react"
 import PoseCard from "../../../components/flows/PoseCard"
 import IconButton from "../../../components/basic/IconButton"
-import Poses, {Difficulty} from "../../../temp/poses"
 import Input from "../../../components/basic/Input"
 import SearchBar from "../../../components/search/SearchBar"
 import DraggableFlatList from "react-native-draggable-flatlist"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
-import VariationsSelect from "../../../components/flows/VariationsSelect"
 import { UserContext } from "../../../context/UserContext"
 import FlowModal from "../../../components/flows/FlowModal"
 import SavesModal from "../../../components/flows/SavesModal"
 import { useRouter } from "expo-router"
 import { updateSavedFlows } from "../../../utils/authUtils"
-
-/*
- * pose: {
- * 	 (defaults:)
- * 	 name
- * 	 image
- * 	 duration
- * 	 variations
- *
- * 	 (added:)
- * 	 id (order number)
- *
- */
+import { fetchPoseData } from "../../../utils/poseUtils"
+import PoseEditor from "../../../components/flows/PoseEditor"
 
 const filters = {
 	Difficulty: {
@@ -69,27 +54,25 @@ export default function FlowCreatorTab() {
 	const { user, setUser } = useContext(UserContext)
 	const [sequence, setSequence] = useState([])
 	const [currentPose, setCurrentPose] = useState(null)
-	const [duration, setDuration] = useState(null)
-	const [poses, setPoses] = useState(Poses)
-	const [idCounter, setIdCounter] = useState(1)
+	const [poses, setPoses] = useState([])
+	const [addPoses, setAddPoses] = useState([])
+	const [seqCounter, setSeqCounter] = useState(1)
 	const [title, setTitle] = useState("New Yoga Flow")
 	// showSaved & showPreview can't be set true when !user
 	const [showSaved, setShowSaved] = useState(false)
 	const [showPreview, setShowPreview] = useState(false)
 
-	const updateDuration = () => {
-		const updatedPose = { ...currentPose, duration: duration }
-		const index = sequence.indexOf(currentPose)
-		setCurrentPose(updatedPose)
-		setSequence([
-			...sequence.slice(0, index),
-			updatedPose,
-			...sequence.slice(index + 1),
-		])
-	}
+	useEffect(() => {
+		fetchPoseData(setPoses)
+	}, [])
+
+	// set poses for Add Poses View
+	useEffect(() => {
+		setAddPoses(poses)
+	}, [poses])
 
 	const updateVariation = (newPose) => {
-		const updatedPose = { ...newPose, id: currentPose.id }
+		const updatedPose = { ...newPose, seqIndex: currentPose.seqIndex }
 		const index = sequence.indexOf(currentPose)
 		setCurrentPose(updatedPose)
 		setSequence([
@@ -101,20 +84,18 @@ export default function FlowCreatorTab() {
 
 	const handleSelect = (selectPose) => {
 		setCurrentPose(selectPose)
-		setDuration(selectPose.duration)
 	}
 
 	const handleDelete = (poseId) => {
-		setSequence(sequence.filter((pose) => pose.id !== poseId))
+		setSequence(sequence.filter((pose) => pose.seqIndex !== poseId))
 		setCurrentPose(null)
 	}
 
 	const handleAdd = (pose) => {
-		const newPose = { ...pose, id: idCounter }
+		const newPose = { ...pose, seqIndex: seqCounter }
 		setSequence([...sequence, newPose])
 		setCurrentPose(newPose)
-		setDuration(pose.duration)
-		setIdCounter(idCounter + 1)
+		setSeqCounter(seqCounter + 1)
 	}
 
 	const useSave = (flow) => {
@@ -124,11 +105,11 @@ export default function FlowCreatorTab() {
 		setTitle(flow.title)
 		setSequence(flow.sequence)
 		setShowSaved(false)
-		setIdCounter(
+		setSeqCounter(
 			flow.sequence.reduce(
-				(max, pose) => (max = max > pose.id ? max : pose.id),
-				0
-			) + 1
+				(max, pose) => (max = max > pose.seqIndex ? max : pose.seqIndex),
+				0,
+			) + 1,
 		)
 	}
 
@@ -142,7 +123,7 @@ export default function FlowCreatorTab() {
 			updateSavedFlows(flows, user, setUser)
 			setShowSaved(false)
 		},
-		[user]
+		[user],
 	)
 
 	const handleSave = useCallback(
@@ -154,40 +135,7 @@ export default function FlowCreatorTab() {
 			updateSavedFlows([...user.flows, flow], user, setUser)
 			setShowPreview(false)
 		},
-		[user]
-	)
-
-	const renderEditor = useCallback(
-		() => (
-			<>
-				<Image 
-					source={{uri: "https://drive.google.come/file/d/"+currentPose.image+"/preview"}} 
-					style={styles.editImage} 
-				/>
-				<View style={styles.editDetails}>
-					<Text numberOfLines={1} style={styles.editHeader}>
-						{currentPose.name}
-					</Text>
-					<Text style={styles.editDescription}>
-						{Difficulty[currentPose.difficulty]}
-					</Text>
-					<Input
-						value={duration}
-						onChangeText={setDuration}
-						onEndEditing={updateDuration}
-						inputMode="decimal"
-						icon="clock-outline"
-						slim
-					/>
-					<VariationsSelect pose={currentPose} updatePose={updateVariation} />
-				</View>
-				<IconButton
-					name="trash-can-outline"
-					onPress={() => handleDelete(currentPose.id)}
-				/>
-			</>
-		),
-		[currentPose]
+		[user],
 	)
 
 	return (
@@ -219,7 +167,7 @@ export default function FlowCreatorTab() {
 										[
 											{ text: "Cancel", style: "cancel" },
 											{ text: "Sign In", onPress: () => router.push("/login") },
-										]
+										],
 									)
 							}}
 						/>
@@ -233,15 +181,12 @@ export default function FlowCreatorTab() {
 						textStyle={styles.title}
 					/>
 				</View>
-				<View style={styles.editView}>
-					{currentPose ? (
-						renderEditor()
-					) : (
-						<Text style={styles.editPlaceholder}>
-							Select a pose to add it to the flow.
-						</Text>
-					)}
-				</View>
+				<PoseEditor
+					poses={poses}
+					pose={currentPose}
+					updateVariation={updateVariation}
+					handleDelete={handleDelete}
+				/>
 				<View style={styles.seqView}>
 					<DraggableFlatList
 						data={sequence}
@@ -256,7 +201,7 @@ export default function FlowCreatorTab() {
 							/>
 						)}
 						onDragEnd={({ data }) => setSequence(data)}
-						keyExtractor={(item) => item.id}
+						keyExtractor={(item) => item.seqIndex}
 						horizontal
 						containerStyle={{ padding: 5, flex: 1 }}
 						ItemSeparatorComponent={() => (
@@ -272,8 +217,8 @@ export default function FlowCreatorTab() {
 				<View style={styles.addView}>
 					<SearchBar
 						filters={filters}
-						defaultData={Poses}
-						setData={setPoses}
+						defaultData={addPoses}
+						setData={setAddPoses}
 						searchField="name"
 					/>
 

@@ -1,2 +1,8 @@
 class Pose < ApplicationRecord
+  scope :in_variation_group, ->(id) { where(var_id: id) }
+
+  def variations
+    return Pose.none if var_id.nil?
+    Pose.where(var_id: var_id).select(:name, :id)
+  end
 end

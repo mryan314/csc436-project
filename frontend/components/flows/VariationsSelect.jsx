@@ -1,38 +1,39 @@
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { FlatList, Image, Pressable, StyleSheet, View } from "react-native"
-import Poses from "../../temp/poses"
 import Colors from "../../constants/Colors"
+import { getPoseImageSource } from "../../utils/poseUtils"
 
-export default function VariationsSelect({ pose, updatePose }) {
+export default function VariationsSelect({ poses, pose, updatePose }) {
 	const [variations, setVariations] = useState([])
 
 	useEffect(() => {
-		if (pose?.variations) {
-			setVariations(pose.variations.map((index) => Poses[index]))
+		if (pose.variations.length) {
+			setVariations([
+				...pose.variations.map(({ id }) => poses.find((p) => p.id === id)),
+			])
 		} else {
 			setVariations([pose])
 		}
 	}, [pose])
 
-	const renderButton = useCallback(
-		({ item }) => {
-			return (
-				<Pressable onPress={() => updatePose(item)}>
-					<Image
-						source={{uri: "https://drive.google.come/file/d/"+item.image+"/preview"}}
-						style={
-							item.name == pose.name ? styles.varSelected : styles.varImage
-						}
-					/>
-				</Pressable>
-			)
-		},
-		[pose]
-	)
-
 	return (
 		<View style={{ flex: 1 }}>
-			<FlatList data={variations} renderItem={renderButton} horizontal />
+			<FlatList
+				data={variations}
+				renderItem={({ item }) => {
+					return (
+						<Pressable onPress={() => updatePose(item)}>
+							<Image
+								source={getPoseImageSource(item)}
+								style={
+									item.name == pose.name ? styles.varSelected : styles.varImage
+								}
+							/>
+						</Pressable>
+					)
+				}}
+				horizontal
+			/>
 		</View>
 	)
 }
