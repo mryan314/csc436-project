@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   has_many :api_keys, as: :bearer
   has_secure_password
+  has_many :flow_lists, dependent: :destroy
 
   enum :role, {student: 0, teacher: 1, admin: 2}
 

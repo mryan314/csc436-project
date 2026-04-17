@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_13_201103) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_16_165054) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -50,6 +50,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_13_201103) do
     t.datetime "updated_at", null: false
     t.index ["bearer_id", "bearer_type"], name: "index_api_keys_on_bearer_id_and_bearer_type"
     t.index ["token_digest"], name: "index_api_keys_on_token_digest", unique: true
+  end
+
+  create_table "flow_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "flow_list_id", null: false
+    t.bigint "pose_id", null: false
+    t.integer "position"
+    t.datetime "updated_at", null: false
+    t.index ["flow_list_id"], name: "index_flow_items_on_flow_list_id"
+    t.index ["pose_id"], name: "index_flow_items_on_pose_id"
+  end
+
+  create_table "flow_lists", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["name", "user_id"], name: "index_flow_lists_on_name_and_user_id", unique: true
+    t.index ["user_id"], name: "index_flow_lists_on_user_id"
   end
 
   create_table "poses", force: :cascade do |t|
@@ -95,4 +114,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_13_201103) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "flow_items", "flow_lists"
+  add_foreign_key "flow_items", "poses"
+  add_foreign_key "flow_lists", "users"
 end
