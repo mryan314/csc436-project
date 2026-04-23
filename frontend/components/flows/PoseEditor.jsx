@@ -37,7 +37,7 @@ export default function PoseEditor({
 			</View>
 			<IconButton
 				name="trash-can-outline"
-				onPress={() => handleDelete(pose.seqIndex)}
+				onPress={() => handleDelete(pose.seqPosition)}
 			/>
 		</View>
 	)

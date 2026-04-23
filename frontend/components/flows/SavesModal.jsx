@@ -8,21 +8,25 @@ import {
 	View,
 } from "react-native"
 import IconButton from "../basic/IconButton"
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Styles from "../../constants/Styles"
 import FlowModal from "./FlowModal"
 import Colors from "../../constants/Colors"
 import { Difficulty } from "../../utils/poses"
 
 export default function SavesModal({
-	savedFlows,
+	user,
 	onClose,
-	onEditSave,
+	onLoadSave,
 	visible,
 }) {
-	const [flows, setFlows] = useState(savedFlows)
+	const [flows, setFlows] = useState([])
 	const [showPreview, setShowPreview] = useState(false)
 	const [previewFlow, setPreview] = useState(null)
+
+	useEffect(() => {
+		setFlows(user.flows)
+	}, [user])
 
 	const handleSelect = (flow) => {
 		setShowPreview(true)
@@ -36,7 +40,7 @@ export default function SavesModal({
 	const renderSaveCard = useCallback(
 		(flow, index) => (
 			<View style={styles.card}>
-				<Pressable onPress={() => handleSelect(flow)}>
+				<Pressable onPress={() => onLoadSave(flow)}>
 					<Text style={Styles.subheader}>{flow.title}</Text>
 					<Text style={Styles.text}>{Difficulty[flow.difficulty]}</Text>
 				</Pressable>

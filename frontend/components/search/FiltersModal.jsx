@@ -9,7 +9,8 @@ import {
 import Styles from "../../constants/Styles"
 import Colors from "../../constants/Colors"
 import IconButton from "../basic/IconButton"
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import { useFocusEffect } from "expo-router"
 
 /**
  * A fullscreen modal UI to show and allow users to change filters for a search.
@@ -18,45 +19,61 @@ import { useCallback, useState } from "react"
  * objects. Those objects should have keys of option names mapping to booleans
  * representing if the option is active. The following is an example filters:
  *  {
- *      "Example Filter": {
- *          "Option 1": false,
- *          "Option 2": true,
+ *      filterName: {
+ * 				label: "Filter Name"
+ * 				Options: [ "Option 1", "Option 2" ]
  *      }
  *  }
  */
 export default function FiltersModal({
 	filters,
-	setFilters,
+	activeFilters,
+	setActiveFilters,
 	visible,
 	setVisible,
 }) {
-	const [activeFilters, setActiveFilters] = useState(filters)
-	const toggleFilter = (filterName, option) => {
-		const newFilters = activeFilters
-		newFilters[filterName][option] = !activeFilters[filterName][option]
-		setActiveFilters(newFilters)
+	const [pendingFilters, setPendingFilters] = useState(activeFilters)
+
+	useEffect(() => {
+		setPendingFilters(activeFilters)
+	}, [])
+
+	const toggleFilter = (group, value) => {
+		console.log(group)
+		console.log(value)
+		setPendingFilters((prev) => ({
+			...prev,
+			[group]: prev[group] === value ? null : value,
+		}))
 	}
 
-	const renderFilter = (name, options) => (
-		<View key={name} style={styles.filter}>
-			<Text style={Styles.subheader}>{name}</Text>
+	const applyFilters = () => {
+		setActiveFilters(pendingFilters)
+		setVisible(false)
+	}
+
+	const renderFilter = (filter, label, options) => (
+		<View key={label} style={styles.filter}>
+			<Text style={Styles.subheader}>{label}</Text>
 			<View style={styles.options}>
-				{Object.entries(options).map(([option, isSelected]) =>
-					renderOption(name, option, isSelected)
-				)}
+				{options?.map((option) => renderOption(filter, option))}
 			</View>
 		</View>
 	)
 
 	const renderOption = useCallback(
-		(filter, option, isSelected) => (
+		(filter, option) => (
 			<Pressable key={option} onPress={() => toggleFilter(filter, option)}>
-				<Text style={isSelected ? styles.selected : styles.option}>
+				<Text
+					style={
+						pendingFilters[filter] === option ? styles.selected : styles.option
+					}
+				>
 					{option}
 				</Text>
 			</Pressable>
 		),
-		[activeFilters]
+		[pendingFilters],
 	)
 
 	return (
@@ -70,12 +87,15 @@ export default function FiltersModal({
 					name="arrow-left"
 					onPress={() => {
 						setVisible(false)
-						setFilters(activeFilters)
 					}}
 				/>
-				{Object.entries(activeFilters).map(([filter, options], i) =>
-					renderFilter(filter, options)
+				{Object.entries(filters).map(([key, { label, options }]) =>
+					renderFilter(key, label, options),
 				)}
+
+				<Pressable onPress={applyFilters}>
+					<Text style={Styles.buttonText}>Apply Filters</Text>
+				</Pressable>
 			</SafeAreaView>
 		</Modal>
 	)

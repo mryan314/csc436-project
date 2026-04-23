@@ -14,7 +14,7 @@ import { useCallback, useContext, useEffect, useState } from "react"
 import PoseCard from "../../../components/flows/PoseCard"
 import IconButton from "../../../components/basic/IconButton"
 import Input from "../../../components/basic/Input"
-import SearchBar from "../../../components/search/SearchBar"
+import SearchList from "../../../components/search/SearchList"
 import DraggableFlatList from "react-native-draggable-flatlist"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { UserContext } from "../../../context/UserContext"
@@ -22,57 +22,60 @@ import FlowModal from "../../../components/flows/FlowModal"
 import SavesModal from "../../../components/flows/SavesModal"
 import { useRouter } from "expo-router"
 import { updateSavedFlows } from "../../../utils/authUtils"
-import { fetchPoseData } from "../../../utils/poseUtils"
+import {
+	createFlow,
+	fetchFlow,
+	fetchPoseData,
+	poseFilters,
+	updateFlow,
+} from "../../../utils/poseUtils"
 import PoseEditor from "../../../components/flows/PoseEditor"
-
-const filters = {
-	Difficulty: {
-		Beginner: false,
-		Intermediate: false,
-		Advanced: false,
-	},
-	Position: {
-		Standing: false,
-		Seated: false,
-		Supine: false,
-		Prone: false,
-		"Arm Balance": false,
-		Supported: false,
-	},
-	Posture: {
-		"Back Bend": false,
-		"Forward Bend": false,
-		"Lateral Bend": false,
-		Twist: false,
-		Balance: false,
-		Neutral: false,
-	},
-}
+import { useFlow } from "../../../context/FlowContext"
 
 export default function FlowCreatorTab() {
 	const router = useRouter()
 	const { user, setUser } = useContext(UserContext)
+	const { pendingFlow, setPendingFlow } = useFlow()
 	const [sequence, setSequence] = useState([])
 	const [currentPose, setCurrentPose] = useState(null)
 	const [poses, setPoses] = useState([])
-	const [addPoses, setAddPoses] = useState([])
 	const [seqCounter, setSeqCounter] = useState(1)
 	const [title, setTitle] = useState("New Yoga Flow")
-	// showSaved & showPreview can't be set true when !user
-	const [showSaved, setShowSaved] = useState(false)
+	const [loadedFlow, setLoadedFlow] = useState(null)
+	// showPreview can't be set true when !user
 	const [showPreview, setShowPreview] = useState(false)
 
 	useEffect(() => {
 		fetchPoseData(setPoses)
 	}, [])
 
-	// set poses for Add Poses View
 	useEffect(() => {
-		setAddPoses(poses)
-	}, [poses])
+		if (!pendingFlow) return
+
+		loadSavedFlow(pendingFlow)
+		setPendingFlow(null)
+	})
+
+	const loadSavedFlow = useCallback(
+		async (flow) => {
+			const newFlow = await fetchFlow(flow.id, poses)
+			setCurrentPose()
+			setLoadedFlow(newFlow)
+			setTitle(newFlow.title)
+			setSequence(newFlow.sequence)
+			setSeqCounter(
+				newFlow.sequence.reduce(
+					(max, pose) =>
+						(max = max > pose.seqPosition ? max : pose.seqPosition),
+					0,
+				) + 1,
+			)
+		},
+		[poses],
+	)
 
 	const updateVariation = (newPose) => {
-		const updatedPose = { ...newPose, seqIndex: currentPose.seqIndex }
+		const updatedPose = { ...newPose, seqPosition: currentPose.seqPosition }
 		const index = sequence.indexOf(currentPose)
 		setCurrentPose(updatedPose)
 		setSequence([
@@ -87,57 +90,34 @@ export default function FlowCreatorTab() {
 	}
 
 	const handleDelete = (poseId) => {
-		setSequence(sequence.filter((pose) => pose.seqIndex !== poseId))
+		setSequence(sequence.filter((pose) => pose.seqPosition !== poseId))
 		setCurrentPose(null)
 	}
 
 	const handleAdd = (pose) => {
-		const newPose = { ...pose, seqIndex: seqCounter }
+		const newPose = { ...pose, seqPosition: seqCounter }
 		setSequence([...sequence, newPose])
 		setCurrentPose(newPose)
 		setSeqCounter(seqCounter + 1)
 	}
 
-	const useSave = (flow) => {
-		if (!flow) {
+	const handleSave = async (flow) => {
+		if (!user) {
+			setShowPreview(false)
 			return
 		}
-		setTitle(flow.title)
-		setSequence(flow.sequence)
-		setShowSaved(false)
-		setSeqCounter(
-			flow.sequence.reduce(
-				(max, pose) => (max = max > pose.seqIndex ? max : pose.seqIndex),
-				0,
-			) + 1,
-		)
-	}
+		let saved = false
+		if (loadedFlow) {
+			saved = await updateFlow(loadedFlow, title, sequence)
+		} else {
+			saved = await createFlow(title, sequence)
+		}
 
-	const handleCloseSaved = useCallback(
-		(flows) => {
-			if (!user) {
-				setShowPreview(false)
-				return
-			}
-			// to implement: save updated flows to user
-			updateSavedFlows(flows, user, setUser)
-			setShowSaved(false)
-		},
-		[user],
-	)
-
-	const handleSave = useCallback(
-		(flow) => {
-			if (!user) {
-				setShowPreview(false)
-				return
-			}
+		if (saved) {
 			updateSavedFlows([...user.flows, flow], user, setUser)
 			setShowPreview(false)
-		},
-		[user],
-	)
-
+		}
+	}
 	return (
 		<GestureHandlerRootView style={{ flex: 1 }}>
 			<SafeAreaView style={Styles.container}>
@@ -159,7 +139,7 @@ export default function FlowCreatorTab() {
 						<IconButton
 							name="menu"
 							onPress={() => {
-								if (user) setShowSaved(true)
+								if (user) router.navigate("/flows/saves")
 								else
 									Alert.alert(
 										"Sign In",
@@ -201,7 +181,7 @@ export default function FlowCreatorTab() {
 							/>
 						)}
 						onDragEnd={({ data }) => setSequence(data)}
-						keyExtractor={(item) => item.seqIndex}
+						keyExtractor={(item) => item.seqPosition}
 						horizontal
 						containerStyle={{ padding: 5, flex: 1 }}
 						ItemSeparatorComponent={() => (
@@ -214,33 +194,15 @@ export default function FlowCreatorTab() {
 						)}
 					/>
 				</View>
-				<View style={styles.addView}>
-					<SearchBar
-						filters={filters}
-						defaultData={addPoses}
-						setData={setAddPoses}
-						searchField="name"
-					/>
+				<SearchList
+					data={poses}
+					filters={poseFilters}
+					searchField="name"
+					renderItem={({ item }) => (
+						<PoseCard pose={item} onPress={handleAdd} showName />
+					)}
+				/>
 
-					<FlatList
-						data={poses}
-						renderItem={({ item }) => (
-							<PoseCard pose={item} onPress={handleAdd} showName />
-						)}
-						numColumns={3}
-						contentContainerStyle={{ gap: 10 }}
-						columnWrapperStyle={{ gap: 10 }}
-					/>
-				</View>
-
-				{user !== null && (
-					<SavesModal
-						savedFlows={user.flows}
-						onClose={handleCloseSaved}
-						onEditSave={useSave}
-						visible={showSaved}
-					/>
-				)}
 				{showPreview && (
 					<FlowModal
 						flow={{ title: title, sequence: sequence }}
@@ -332,11 +294,5 @@ const styles = StyleSheet.create({
 	},
 	seqSeparator: {
 		alignSelf: "center",
-	},
-	addView: {
-		flex: 4,
-	},
-	addFilters: {
-		flexDirection: "row",
 	},
 })

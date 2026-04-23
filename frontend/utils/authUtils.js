@@ -18,13 +18,38 @@ async function saveUserToken(token, id) {
 	await SecureStore.setItemAsync("userTokenId", String(id))
 }
 
-async function getUserToken() {
+export async function getUserToken() {
 	return await SecureStore.getItemAsync("userToken")
 }
 
+async function fetchUserFlows() {
+	try {
+		const response = await fetch(`http://localhost:3000/flows`, {
+			method: "GET",
+			headers: {
+				Authorization: "Bearer " + (await getUserToken()),
+			},
+		}).then((response) => {
+			if (!response.ok) {
+				throw new Error(
+					`HTTP error when fetching flows! Status: ${response.status}`,
+				)
+			}
+			return response.json()
+		}).then((response) => response.map(({ name, id }) => ({
+				id: id,
+				title: name,
+			})))
+
+		console.log(response)
+		return await response
+	} catch (e) {
+		console.warn(e)
+		return null
+	}
+}
+
 async function fetchUserData(token, userId) {
-	console.log(token)
-	console.log(userId)
 	const response = await fetch(`http://localhost:3000/user/${userId}`, {
 		method: "GET",
 		headers: {
@@ -38,34 +63,27 @@ async function fetchUserData(token, userId) {
 		}
 		return response.json()
 	})
-	console.log(response)
 	return {
-		id: response.id,
-		name: response.first_name,
-		email: response.email,
-		role: response.role,
+		id: await response.id,
+		name: await response.first_name,
+		email: await response.email,
+		role: await response.role,
+		flows: await fetchUserFlows(),
 		// below values not yet in DB
 		profilePic: null,
 		classes: [],
-		flows: [],
 		videos: [],
 	}
 }
 
 export async function logIn(email, password, setUser) {
 	try {
-		console.log("login start")
 		const response = await generateUserToken(email, password)
 
-		console.log(response)
-
 		await saveUserToken(response.token, response.id)
-		console.log("save token success")
 
 		const userDetails = await fetchUserData(response.token, response.bearer_id)
-		console.log("fetch user success")
 		await setUser(userDetails)
-		console.log("set user success")
 		return true
 	} catch (e) {
 		console.warn(e)
@@ -88,30 +106,28 @@ export async function signUp(name, email, tel, password, setUser) {
 					first_name: name,
 				},
 			}),
-		}).then((response) => {
-			if (!response.ok) {
-				throw new Error(
-					`HTTP error when creating user! Status: ${response.status}`,
-				)
-			}
-			return response.json()
 		})
-
+		if (!response.ok) {
+			throw new Error(
+				`HTTP error when creating user! Status: ${response.status}`,
+			)
+		}
+		const data = await response.json()
 		// generates and saves api token and user info
 		const tokenResponse = await generateUserToken(email, password)
 		await saveUserToken(tokenResponse.token, tokenResponse.bearer_id)
 
 		const userDetails = {
-			id: response.id,
-			name: response.first_name,
-			email: response.email,
-			role: response.role,
+			id: data.id,
+			name: data.first_name,
+			email: data.email,
+			role: data.role,
 			profilePic: null,
 			classes: [],
 			flows: [],
 			videos: [],
 		}
-		setUser(userDetails)
+		await setUser(userDetails)
 
 		return true
 	} catch (e) {
@@ -122,17 +138,14 @@ export async function signUp(name, email, tel, password, setUser) {
 
 export async function logOut(setUser) {
 	try {
-		const token = await SecureStore.getItemAsync("userToken")
 		const tokenId = await SecureStore.getItemAsync("userTokenId")
 		// delete api auth token from db
 		const response = await fetch(`http://localhost:3000/api-keys/${tokenId}`, {
 			method: "DELETE",
 			headers: {
-				Authorization: "Bearer " + token,
+				Authorization: "Bearer " + await getUserToken(),
 			},
 		})
-
-		console.log(response)
 
 		// remove api auth token from local storage
 		await SecureStore.deleteItemAsync("userToken")
