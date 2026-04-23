@@ -91,7 +91,7 @@ export async function logIn(email, password, setUser) {
 	}
 }
 
-export async function signUp(name, email, tel, password, setUser) {
+export async function signUp(name, email, password, setUser) {
 	try {
 		const response = await fetch("http://localhost:3000/user", {
 			method: "POST",

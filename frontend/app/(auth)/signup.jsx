@@ -28,7 +28,7 @@ export default function SignupScreen() {
 		} else if (password !== reenter) {
 			setError("Passwords do not match.")
 			setReenter("")
-		} else if (await signUp(name, email.text, tel, password, setUser)) {
+		} else if (await signUp(name, email.text, password, setUser)) {
 			setPassword("")
 			setError()
 			router.back()

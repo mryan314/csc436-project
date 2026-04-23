@@ -82,7 +82,7 @@ export default function HomeScreen() {
 			<View
 				style={{ padding: 2.5, borderLeftWidth: 1, borderColor: Colors.border }}
 			>
-				<Image source={{uri: "https://drive.google.come/file/d/"+flow.sequence[0]?.image+"/preview"}} style={styles.flowImage} />
+				<Text>{flow.name}</Text>
 			</View>
 		</Pressable>
 	)

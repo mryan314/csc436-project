@@ -1,5 +1,5 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
-import { Link, useRouter } from "expo-router"
+import { Link, Redirect } from "expo-router"
 import { StyleSheet, View } from "react-native"
 import Styles from "../../../constants/Styles"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -9,14 +9,9 @@ import { useContext, useEffect } from "react"
 import { UserContext } from "../../../context/UserContext"
 
 export default function NoProfileScreen() {
-	const router = useRouter()
 	const user = useContext(UserContext).user
 
-	useEffect(() => {
-		if (user) {
-			router.navigate("/profile/")
-		}
-	}, [user])
+	if (user) return <Redirect href="/profile/" />
 
 	return (
 		<SafeAreaView style={Styles.container}>

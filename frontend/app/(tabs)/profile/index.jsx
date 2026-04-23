@@ -9,7 +9,7 @@ import {
 	View,
 } from "react-native"
 import * as ImagePicker from "expo-image-picker"
-import { useRouter } from "expo-router"
+import { Redirect, useRouter } from "expo-router"
 import { UserContext } from "../../../context/UserContext"
 import Colors from "../../../constants/Colors"
 import Header from "../../../components/Header"
@@ -38,10 +38,10 @@ export default function ProfileScreen() {
 		/>,
 	)
 
+	if (!user) return <Redirect href="/profile/no-profile" />
+
 	useEffect(() => {
-		if (user == null) {
-			router.navigate("/profile/no-profile")
-		} else {
+		if (user) {
 			setName(user.name)
 			setEmail(user.email)
 			// setPhone(user.phone)
