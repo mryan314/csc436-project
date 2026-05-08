@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useState } from "react"
+import React, { useCallback, useContext, useEffect, useState } from "react"
 import {
 	View,
 	Text,
@@ -14,12 +14,34 @@ import Colors from "../../constants/Colors"
 import Styles from "../../constants/Styles"
 import { UserContext } from "../../context/UserContext"
 import { updateClasses } from "../../utils/authUtils"
+import { createClass, enrollInClass, getClasses } from "../../utils/classUtils"
 
 const CalendarScreen = () => {
+	const { user, setUser } = useContext(UserContext)
 	const [selectedDate, setSelectedDate] = useState("")
 	const [markedDates, setMarkedDates] = useState("2024-12-20")
 	const [showAddClass, setShowAddClass] = useState(false)
-	const { user, setUser } = useContext(UserContext)
+	const [availableClasses, setAvailableClasses] = useState([])
+	const [isInstructor, setIsInstructor] = useState(false)
+
+	useEffect(() => {
+		getClasses(setAvailableClasses)
+	}, [])
+
+	useEffect(() => {
+		setMarkedDates(
+			Object.keys(availableClasses).reduce((acc, obj) => {
+				acc[obj] = { marked: true, dotColor: Colors.ui }
+				return acc
+			}, []),
+		)
+	}, [availableClasses])
+
+	useEffect(() => {
+		setIsInstructor(user && user.role === teacher)
+	}, [user])
+
+	/** 
 
 	const [availableClasses, setAvailableClasses] = useState({
 		"2024-10-24": [
@@ -39,24 +61,32 @@ const CalendarScreen = () => {
 			},
 		],
 	})
-
-	let isInstructor = false
-	if (user && user.role === "instructor") {
-		isInstructor = true
-	}
+	*/
 
 	const handleDayPress = (day) => {
 		setSelectedDate(day.dateString)
 	}
 
-	const bookClass = (classId, date) => {
+	const handleEnroll = (classId, date) => {
 		console.log(classId)
-		Alert.alert("Confirm Booking", "Would you like to book this class?", [
-			{ text: "Cancel", style: "cancel" },
-			{
-				text: "Book",
-				onPress: () => {
-					Alert.alert("Success", "Class booked successfully!")
+		Alert.alert(
+			"Confirm Enrollment",
+			"Would you like to enroll in this class?",
+			[
+				{ text: "Cancel", style: "cancel" },
+				{
+					text: "Enroll",
+					onPress: async () => {
+						if (await enrollInClass()) {
+							Alert.alert("Success", "Enrolled successfully!")
+							getClasses(setAvailableClasses)
+						} else {
+							Alert.alert(
+								"Failed to Enroll",
+								"There was an error when trying to enroll in the class. Please try again.",
+							)
+						}
+						/** 
 					const classesCopy = { ...availableClasses }
 					classesCopy[date] = classesCopy[date].map((c) => {
 						if (c === classId) {
@@ -68,24 +98,17 @@ const CalendarScreen = () => {
 						[...user.classes, { ...classId, date: date }],
 						user,
 						setUser
-					)
-					//user?.classes.push({ date: date, ...classId })
+					)*/
+						//user?.classes.push({ date: date, ...classId })
+					},
 				},
-			},
-		])
+			],
+		)
 	}
 
-	const addClass = (classDetails) => {
-		const newClass = {
-			id: Date.now(),
-			instructor: "Sarah",
-			...classDetails,
-		}
-
-		setAvailableClasses((prev) => ({
-			...prev,
-			[selectedDate]: [...(prev[selectedDate] || []), newClass],
-		}))
+	const addClass = async (name, desc, scheduledAt, capacity, location) => {
+		await createClass(name, desc, scheduledAt, capacity, location)
+		getClasses(setAvailableClasses)
 	}
 
 	const ClassList = useCallback(
@@ -98,22 +121,22 @@ const CalendarScreen = () => {
 						<TouchableOpacity
 							key={yogaClass.id}
 							style={styles.classCard}
-							onPress={() => !isInstructor && bookClass(yogaClass, date)}
+							onPress={() => !isInstructor && handleEnroll(yogaClass, date)}
 						>
-							<Text style={styles.classTitle}>{yogaClass.title}</Text>
+							<Text style={styles.classTitle}>{yogaClass.name}</Text>
 							<Text style={styles.classInfo}>Time: {yogaClass.time}</Text>
 							<Text style={styles.classInfo}>
-								Instructor: {yogaClass.instructor}
+								Instructor: {yogaClass.instructor.first_name}
 							</Text>
 							<Text style={styles.classInfo}>
-								Available Spots: {yogaClass.spots}
+								Available Spots: {yogaClass.capacity - yogaClass.numEnrolled}
 							</Text>
 						</TouchableOpacity>
 					))}
 				</ScrollView>
 			)
 		},
-		[availableClasses]
+		[availableClasses],
 	)
 
 	return (
@@ -122,7 +145,7 @@ const CalendarScreen = () => {
 			<Calendar
 				onDayPress={handleDayPress}
 				markedDates={{
-					"2024-12-20": {marked: true, dotColor: Colors.ui},
+					...markedDates,
 					[selectedDate]: { selected: true, selectedColor: Colors.ui },
 				}}
 				theme={{

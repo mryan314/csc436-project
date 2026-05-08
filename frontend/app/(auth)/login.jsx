@@ -35,11 +35,9 @@ export default function LoginScreen() {
 			if (await logIn(email.text, password, setUser)) {
 				setPassword("")
 				setError()
-				console.log("success?")
 				router.back()
 			}
 			else {
-				console.log(password)
 				setPassword("")
 				setError("The email or password you entered was incorrect.")
 			}
