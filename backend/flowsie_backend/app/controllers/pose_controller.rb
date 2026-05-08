@@ -27,4 +27,8 @@ class PoseController < ApplicationController
   def pose_params
     params.require(:pose).permit(:name, :difficulty, :position, :bend, :image_url, :variations)
   end
+
+  def set_pose
+    @pose = Pose.find_by id: params[:id]
+  end
 end

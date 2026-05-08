@@ -8,7 +8,7 @@ class CreateYogaClasses < ActiveRecord::Migration[8.1]
       t.integer :instructor_id
       t.string :desc
       t.integer :class_cap
-      t.integer :class_size
+      t.integer :class_size, default: 0
       t.string :location
 
       t.timestamps

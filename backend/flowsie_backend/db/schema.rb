@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_16_165054) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_24_183951) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -50,6 +50,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_16_165054) do
     t.datetime "updated_at", null: false
     t.index ["bearer_id", "bearer_type"], name: "index_api_keys_on_bearer_id_and_bearer_type"
     t.index ["token_digest"], name: "index_api_keys_on_token_digest", unique: true
+  end
+
+  create_table "enrollments", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.bigint "yoga_class_id", null: false
+    t.index ["user_id", "yoga_class_id"], name: "index_enrollments_on_user_id_and_yoga_class_id", unique: true
+    t.index ["user_id"], name: "index_enrollments_on_user_id"
+    t.index ["yoga_class_id"], name: "index_enrollments_on_yoga_class_id"
   end
 
   create_table "flow_items", force: :cascade do |t|
@@ -100,21 +110,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_16_165054) do
 
   create_table "yoga_classes", force: :cascade do |t|
     t.integer "class_cap"
-    t.integer "class_size"
+    t.integer "class_size", default: 0
     t.datetime "created_at", null: false
-    t.date "date"
     t.string "desc"
     t.integer "duration"
-    t.integer "instructor_id"
+    t.bigint "instructor_id"
     t.string "location"
     t.string "name"
-    t.time "start_time"
+    t.datetime "scheduled_at"
     t.datetime "updated_at", null: false
+    t.index ["instructor_id"], name: "index_yoga_classes_on_instructor_id"
+    t.index ["scheduled_at"], name: "index_yoga_classes_on_scheduled_at"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "enrollments", "users"
+  add_foreign_key "enrollments", "yoga_classes"
   add_foreign_key "flow_items", "flow_lists"
   add_foreign_key "flow_items", "poses"
   add_foreign_key "flow_lists", "users"
+  add_foreign_key "yoga_classes", "users", column: "instructor_id"
 end

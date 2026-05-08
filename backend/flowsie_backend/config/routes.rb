@@ -12,4 +12,7 @@ Rails.application.routes.draw do
   resources :user, path: "user", only: %i[create show update destroy]
   resources :pose, path: "pose", only: %i[index create show update]
   resources :flow_lists, path: "flows", except: %i[new edit]
+  resources :yoga_classes, path: "classes", except: %i[new edit] do
+    resources :enrollments, path: "enroll", only: %i[create destroy]
+  end
 end
